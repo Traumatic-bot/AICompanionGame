@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine.InputSystem;
 using System.Collections;
 using System.Text;
+using UnityEngine.UI;
 
 public class DialogueManager : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class DialogueManager : MonoBehaviour
     public TMP_Text npcNameText;
     public TMP_Text dialogueText;
     public TMP_InputField playerInput;
+    public ScrollRect conversationScroll;
 
     private PlayerMovement playerMovement;
 
@@ -19,6 +21,7 @@ public class DialogueManager : MonoBehaviour
 
     private string currentNPCName;
     private string conversationHistory = "";
+    private bool conversationStarted = false;
 
     private const string chatURL =
         "http://127.0.0.1:5000/chat";
@@ -78,12 +81,19 @@ public class DialogueManager : MonoBehaviour
 
         npcNameText.text = npcName;
 
-        conversationHistory =
-            npcName + ":\n" +
-            message;
+        if (!conversationStarted)
+        {
+            conversationHistory =
+                npcName + ":\n" +
+                message;
+
+            conversationStarted = true;
+        }
 
         dialogueText.text =
             conversationHistory;
+
+        StartCoroutine(ScrollToBottom());
 
         if (playerInput != null)
         {
@@ -127,6 +137,8 @@ public class DialogueManager : MonoBehaviour
             "\n\n" +
             currentNPCName +
             " is thinking...";
+
+        StartCoroutine(ScrollToBottom());
 
         playerInput.text = "";
 
@@ -219,6 +231,8 @@ public class DialogueManager : MonoBehaviour
         dialogueText.text =
             conversationHistory;
 
+        StartCoroutine(ScrollToBottom());
+
         if (playerInput != null &&
             dialogueOpen)
         {
@@ -249,5 +263,18 @@ public class DialogueManager : MonoBehaviour
     public bool IsDialogueOpen()
     {
         return dialogueOpen;
+    }
+
+    private IEnumerator ScrollToBottom()
+    {
+        // Wait until Unity has updated the UI layout
+        yield return null;
+
+        Canvas.ForceUpdateCanvases();
+
+        if (conversationScroll != null)
+        {
+            conversationScroll.verticalNormalizedPosition = 0f;
+        }
     }
 }
