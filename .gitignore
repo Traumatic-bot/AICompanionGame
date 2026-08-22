@@ -112,3 +112,18 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Python virtual environment
+Backend/.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Environment variables / secrets
+.env
+Backend/.env
+
+# TextMesh Pro demo/example content
+Assets/TextMesh Pro/Examples & Extras/
+Assets/TextMesh Pro/Examples & Extras.meta
