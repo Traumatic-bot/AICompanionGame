@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 using System.Collections;
 using System.Text;
 using UnityEngine.UI;
+using System.IO;
 
 public class DialogueManager : MonoBehaviour
 {
@@ -15,6 +16,7 @@ public class DialogueManager : MonoBehaviour
     public ScrollRect conversationScroll;
 
     private PlayerMovement playerMovement;
+    private MemoryManager memoryManager;
 
     private bool dialogueOpen = false;
     private bool waitingForResponse = false;
@@ -32,6 +34,7 @@ public class DialogueManager : MonoBehaviour
     {
         public string message;
         public string history;
+        public string memories;
     }
 
 
@@ -39,12 +42,22 @@ public class DialogueManager : MonoBehaviour
     private class ChatResponse
     {
         public string response;
+        public string memory;
         public string error;
     }
 
+    [System.Serializable]
+    private class ConversationSaveData
+    {
+        public string history;
+        public bool conversationStarted;
+    }
 
     void Start()
     {
+        memoryManager =
+            FindFirstObjectByType<MemoryManager>();
+
         playerMovement =
             FindFirstObjectByType<PlayerMovement>();
 
@@ -52,15 +65,27 @@ public class DialogueManager : MonoBehaviour
         {
             dialoguePanel.SetActive(false);
         }
+
+        LoadConversation();
     }
 
 
     void Update()
     {
-        if (!dialogueOpen || playerInput == null)
+        if (!dialogueOpen)
             return;
 
+        // Close dialogue with Escape
         if (Keyboard.current != null &&
+            Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            CloseDialogue();
+            return;
+        }
+
+        // Send message with Enter
+        if (playerInput != null &&
+            Keyboard.current != null &&
             Keyboard.current.enterKey.wasPressedThisFrame &&
             !waitingForResponse)
         {
@@ -159,6 +184,17 @@ public class DialogueManager : MonoBehaviour
         chatRequest.message = playerMessage;
         chatRequest.history = conversationHistory;
 
+        if (memoryManager != null)
+        {
+            chatRequest.memories =
+                memoryManager.GetMemoriesAsText();
+        }
+        else
+        {
+            chatRequest.memories =
+                "No important memories yet.";
+        }
+
         string json =
             JsonUtility.ToJson(chatRequest);
 
@@ -190,15 +226,22 @@ public class DialogueManager : MonoBehaviour
                         request.downloadHandler.text
                     );
 
-                if (response != null &&
-                    !string.IsNullOrEmpty(
-                        response.response))
+                if (response != null && !string.IsNullOrEmpty(response.response))
                 {
                     conversationHistory +=
                         "\n\n" +
                         currentNPCName +
                         ":\n" +
                         response.response;
+
+                    if (memoryManager != null &&
+                        !string.IsNullOrWhiteSpace(response.memory) &&
+                        response.memory.Trim() != "NONE")
+                    {
+                        memoryManager.AddMemory(
+                            response.memory.Trim()
+                        );
+                    }
                 }
                 else
                 {
@@ -231,6 +274,8 @@ public class DialogueManager : MonoBehaviour
         dialogueText.text =
             conversationHistory;
 
+        SaveConversation();
+
         StartCoroutine(ScrollToBottom());
 
         if (playerInput != null &&
@@ -246,16 +291,22 @@ public class DialogueManager : MonoBehaviour
     {
         dialogueOpen = false;
 
-        dialoguePanel.SetActive(false);
+        if (playerInput != null)
+        {
+            playerInput.DeactivateInputField();
+        }
+
+        if (dialoguePanel != null)
+        {
+            dialoguePanel.SetActive(false);
+        }
 
         if (playerMovement != null)
         {
             playerMovement.enabled = true;
         }
 
-        Cursor.lockState =
-            CursorLockMode.Locked;
-
+        Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
@@ -263,6 +314,89 @@ public class DialogueManager : MonoBehaviour
     public bool IsDialogueOpen()
     {
         return dialogueOpen;
+    }
+
+    private void SaveConversation()
+    {
+        ConversationSaveData saveData =
+            new ConversationSaveData();
+
+        saveData.history = conversationHistory;
+        saveData.conversationStarted = conversationStarted;
+
+        string json =
+            JsonUtility.ToJson(saveData, true);
+
+        string path =
+            Path.Combine(
+                Application.persistentDataPath,
+                "conversation.json"
+            );
+
+        File.WriteAllText(path, json);
+
+        Debug.Log(
+            "Conversation saved to: " + path
+        );
+    }
+
+
+    private void LoadConversation()
+    {
+        string path =
+            Path.Combine(
+                Application.persistentDataPath,
+                "conversation.json"
+            );
+
+        if (!File.Exists(path))
+            return;
+
+        string json =
+            File.ReadAllText(path);
+
+        ConversationSaveData saveData =
+            JsonUtility.FromJson<ConversationSaveData>(
+                json
+            );
+
+        if (saveData == null)
+            return;
+
+        conversationHistory =
+            saveData.history;
+
+        conversationStarted =
+            saveData.conversationStarted;
+
+        Debug.Log("Conversation loaded.");
+    }
+
+    [ContextMenu("Clear Conversation History")]
+    public void ClearConversationHistory()
+    {
+        conversationHistory = "";
+        conversationStarted = false;
+
+        string path =
+            Path.Combine(
+                Application.persistentDataPath,
+                "conversation.json"
+            );
+
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+
+        if (dialogueText != null)
+        {
+            dialogueText.text = "";
+        }
+
+        Debug.Log(
+            "Conversation history cleared. Long-term memories were kept."
+        );
     }
 
     private IEnumerator ScrollToBottom()
