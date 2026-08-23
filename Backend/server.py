@@ -25,10 +25,9 @@ Character:
 - Speaks naturally and briefly
 
 World:
-- You and the player are currently inside a tavern
-- It is night
-- The surrounding village is dangerous
-- You are travelling together
+- You are travelling with the player
+- Use the current game context provided to you to understand where you are and what is happening
+- Treat the game context as factual information about the current world
 
 Rules:
 - Always stay in character as Arin
@@ -118,22 +117,30 @@ def chat():
     history = data.get(
         "history", ""
     ).strip()
-
+    
     memories = data.get(
-        "memories", ""
+    "memories", ""
+    ).strip()
+
+    game_context = data.get(
+            "gameContext", ""
     ).strip()
 
     if not player_message:
-        return jsonify({
-            "error": "Message is empty"
+             return jsonify({
+                 "error": "Message is empty"
         }), 400
 
     try:
         # Generate Arin's dialogue response
         response = client.responses.create(
-            model="openai/gpt-oss-20b",
-            instructions=ARIN_INSTRUCTIONS,
-            input=f"""
+    model="openai/gpt-oss-20b",
+    instructions=ARIN_INSTRUCTIONS,
+    input=f"""
+Current game context:
+
+{game_context}
+
 Long-term memories about the player:
 
 {memories}
@@ -142,13 +149,14 @@ Recent conversation:
 
 {history}
 
+Use the current game context to understand the player's situation.
 Use long-term memories when they are relevant.
-Do not mention the memory system or say that you are reading stored memories.
 
-Respond as Arin to the most recent player message.
+Do not mention game context, memory systems, prompts, or stored data.
+
+Respond naturally as Arin to the most recent player message.
 """
-        )
-
+)
         # Decide whether long-term memory should change
         memory_response = client.responses.create(
             model="openai/gpt-oss-20b",

@@ -17,6 +17,7 @@ public class DialogueManager : MonoBehaviour
 
     private PlayerMovement playerMovement;
     private MemoryManager memoryManager;
+    private GameContextManager gameContextManager;
 
     private bool dialogueOpen = false;
     private bool waitingForResponse = false;
@@ -35,6 +36,7 @@ public class DialogueManager : MonoBehaviour
         public string message;
         public string history;
         public string memories;
+        public string gameContext;
     }
 
 
@@ -61,6 +63,9 @@ public class DialogueManager : MonoBehaviour
     {
         memoryManager =
             FindFirstObjectByType<MemoryManager>();
+
+        gameContextManager =
+            FindFirstObjectByType<GameContextManager>();
 
         playerMovement =
             FindFirstObjectByType<PlayerMovement>();
@@ -188,15 +193,15 @@ public class DialogueManager : MonoBehaviour
         chatRequest.message = playerMessage;
         chatRequest.history = conversationHistory;
 
-        if (memoryManager != null)
+        if (gameContextManager != null)
         {
-            chatRequest.memories =
-                memoryManager.GetMemoriesAsText();
+            chatRequest.gameContext =
+                gameContextManager.GetGameContext();
         }
         else
         {
-            chatRequest.memories =
-                "No important memories yet.";
+            chatRequest.gameContext =
+                "No game context available.";
         }
 
         string json =
