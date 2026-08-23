@@ -42,7 +42,11 @@ public class DialogueManager : MonoBehaviour
     private class ChatResponse
     {
         public string response;
-        public string memory;
+
+        public string memoryAction;
+        public string oldMemory;
+        public string newMemory;
+
         public string error;
     }
 
@@ -234,13 +238,24 @@ public class DialogueManager : MonoBehaviour
                         ":\n" +
                         response.response;
 
-                    if (memoryManager != null &&
-                        !string.IsNullOrWhiteSpace(response.memory) &&
-                        response.memory.Trim() != "NONE")
+                    if (memoryManager != null)
                     {
-                        memoryManager.AddMemory(
-                            response.memory.Trim()
-                        );
+                        if (response.memoryAction == "ADD" &&
+                            !string.IsNullOrWhiteSpace(response.newMemory))
+                        {
+                            memoryManager.AddMemory(
+                                response.newMemory.Trim()
+                            );
+                        }
+
+                        else if (response.memoryAction == "REPLACE" &&
+                                 !string.IsNullOrWhiteSpace(response.newMemory))
+                        {
+                            memoryManager.ReplaceMemory(
+                                response.oldMemory.Trim(),
+                                response.newMemory.Trim()
+                            );
+                        }
                     }
                 }
                 else

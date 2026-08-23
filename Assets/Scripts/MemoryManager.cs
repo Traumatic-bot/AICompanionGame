@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 
@@ -46,6 +46,44 @@ public class MemoryManager : MonoBehaviour
         );
     }
 
+    public void ReplaceMemory(
+    string oldMemory,
+    string newMemory)
+    {
+        if (string.IsNullOrWhiteSpace(newMemory))
+            return;
+
+        int index =
+            memoryData.memories.IndexOf(oldMemory);
+
+        if (index >= 0)
+        {
+            memoryData.memories[index] = newMemory;
+
+            Debug.Log(
+                "Memory replaced:\n" +
+                oldMemory +
+                "\n→\n" +
+                newMemory
+            );
+        }
+        else
+        {
+            // If the old memory cannot be found,
+            // safely add the new one instead.
+            if (!memoryData.memories.Contains(newMemory))
+            {
+                memoryData.memories.Add(newMemory);
+
+                Debug.Log(
+                    "Old memory not found. New memory added: " +
+                    newMemory
+                );
+            }
+        }
+
+        SaveMemories();
+    }
 
     public string GetMemoriesAsText()
     {
