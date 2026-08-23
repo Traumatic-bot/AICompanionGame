@@ -15,4 +15,15 @@ public class GameContextManager : MonoBehaviour
 
         return context;
     }
+
+
+    public void SetLocation(string newLocation)
+    {
+        currentLocation = newLocation;
+
+        Debug.Log(
+            "Player location changed to: " +
+            currentLocation
+        );
+    }
 }
