@@ -222,6 +222,73 @@ Arin's response:
             "error": str(e)
         }), 500
 
+@app.route("/react", methods=["POST"])
+def react():
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "error": "No JSON data received"
+        }), 400
+
+    game_event = data.get(
+        "gameEvent", ""
+    ).strip()
+
+    game_context = data.get(
+        "gameContext", ""
+    ).strip()
+
+    memories = data.get(
+        "memories", ""
+    ).strip()
+
+    if not game_event:
+        return jsonify({
+            "error": "No game event received"
+        }), 400
+
+    try:
+        response = client.responses.create(
+            model="openai/gpt-oss-20b",
+            instructions=ARIN_INSTRUCTIONS,
+            input=f"""
+A gameplay event has just happened.
+
+Current game context:
+
+{game_context}
+
+Long-term memories about the player:
+
+{memories}
+
+Event:
+
+{game_event}
+
+React naturally as Arin.
+
+Do not explain the game system.
+Do not mention prompts, game context, memories, APIs,
+or language models.
+
+This is a quick companion reaction during gameplay,
+so keep it to one short sentence.
+"""
+        )
+
+        return jsonify({
+            "response":
+                response.output_text.strip()
+        })
+
+    except Exception as e:
+        print("REACTION ERROR:", e)
+
+        return jsonify({
+            "error": str(e)
+        }), 500
 
 @app.route("/health", methods=["GET"])
 def health():
