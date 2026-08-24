@@ -67,7 +67,7 @@ public class PlayerInteraction : MonoBehaviour
         if (Physics.Raycast(ray, out hit, interactionDistance))
         {
             NPCInteraction npc =
-                hit.collider.GetComponent<NPCInteraction>();
+                hit.collider.GetComponentInParent<NPCInteraction>();
 
             if (npc != null)
             {

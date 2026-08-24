@@ -7,13 +7,18 @@ public class CompanionFollow : MonoBehaviour
 
     [Header("Follow Settings")]
     public float followDistance = 3f;
+    public float rotationSpeed = 5f;
 
     private NavMeshAgent agent;
     private DialogueManager dialogueManager;
+    private Animator animator;
+
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
+
+        animator = GetComponentInChildren<Animator>();
 
         dialogueManager =
             FindFirstObjectByType<DialogueManager>();
@@ -30,16 +35,40 @@ public class CompanionFollow : MonoBehaviour
         }
     }
 
+
     void Update()
     {
         if (agent == null || player == null)
             return;
 
-        // Don't move while the player is talking to Arin
-        if (dialogueManager != null &&
-            dialogueManager.IsDialogueOpen())
+        bool isTalking =
+            dialogueManager != null &&
+            dialogueManager.IsDialogueOpen();
+
+        // Always update talking parameter first
+        if (animator != null)
+        {
+            animator.SetBool(
+                "IsTalking",
+                isTalking
+            );
+        }
+
+        // While talking, stop and face the player
+        if (isTalking)
         {
             agent.ResetPath();
+
+            if (animator != null)
+            {
+                animator.SetBool(
+                    "IsWalking",
+                    false
+                );
+            }
+
+            FacePlayer();
+
             return;
         }
 
@@ -58,6 +87,43 @@ public class CompanionFollow : MonoBehaviour
         else
         {
             agent.ResetPath();
+        }
+
+        if (animator != null)
+        {
+            bool isWalking =
+                agent.velocity.magnitude > 0.1f;
+
+            animator.SetBool(
+                "IsWalking",
+                isWalking
+            );
+        }
+    }
+
+
+    private void FacePlayer()
+    {
+        Vector3 direction =
+            player.position -
+            transform.position;
+
+        direction.y = 0f;
+
+        if (direction.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRotation =
+                Quaternion.LookRotation(
+                    direction
+                );
+
+            transform.rotation =
+                Quaternion.Slerp(
+                    transform.rotation,
+                    targetRotation,
+                    rotationSpeed *
+                    Time.deltaTime
+                );
         }
     }
 }
