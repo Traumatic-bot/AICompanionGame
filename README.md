@@ -1,4 +1,5 @@
-# AICompanionGame# Intelligent Companion NPC Using Large Language Models
+# AICompanionGame
+# Intelligent Companion NPC Using Large Language Models
 
 A Unity prototype that demonstrates an AI-driven companion NPC capable of natural conversation, persistent memory, awareness of game context, and proactive reactions to gameplay events.
 
